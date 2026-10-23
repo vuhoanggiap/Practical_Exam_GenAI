@@ -13,7 +13,7 @@ namespace SmartShopAPI.Data
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
-            // Đảm bảo tên bảng khớp với CSDL bạn tạo trong XAMPP/MySQL
+            // Ensure the table names match the database created in XAMPP/MySQL
             modelBuilder.Entity<Product>().ToTable("Product");
             modelBuilder.Entity<Review>().ToTable("Review");
         }

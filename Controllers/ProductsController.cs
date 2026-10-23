@@ -24,27 +24,26 @@ namespace SmartShopAPI.Controllers
         [HttpPost("{id}/generatedescription")]
         public async Task<IActionResult> GenerateDescription(int id)
         {
-            // 1. Lấy API Key từ User Secrets
+            // 1. Retrieve the API key from User Secrets
             var apiKey = _configuration["GeminiApiKey"];
             if (string.IsNullOrEmpty(apiKey))
             {
-                return BadRequest(new { message = "Gemini API Key chưa được cấu hình!" });
+                return BadRequest(new { message = "Gemini API key is not configured." });
             }
 
-            // 2. Tìm sản phẩm trong cơ sở dữ liệu
+            // 2. Find the product in the database
             var product = await _context.Products.FindAsync(id);
             if (product == null)
             {
-                return NotFound(new { message = $"Không tìm thấy sản phẩm với ID = {id}" });
+                return NotFound(new { message = $"Product with ID = {id} was not found." });
             }
 
             try
             {
-                // 3. Endpoint gọi Gemini REST API với model gemini-2.5-flash[cite: 3]
-                // Đổi từ gemini-2.5-flash thành gemini-3.8-flash
+                // 3. Call the Gemini REST API using the gemini-3.8-flash model
                 string url = $"https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent?key={apiKey}";
 
-                // 4. Chuẩn bị payload theo chuẩn Gemini API (kèm System Instruction)
+                // 4. Prepare the payload according to the Gemini API format, including the system instruction
                 var requestBody = new
                 {
                     system_instruction = new
@@ -69,15 +68,15 @@ namespace SmartShopAPI.Controllers
                 string jsonContent = JsonSerializer.Serialize(requestBody);
                 var httpContent = new StringContent(jsonContent, Encoding.UTF8, "application/json");
 
-                // 5. Gửi request đến Google Gemini
+                // 5. Send the request to Google Gemini
                 var response = await _httpClient.PostAsync(url, httpContent);
                 if (!response.IsSuccessStatusCode)
                 {
                     string errorDetails = await response.Content.ReadAsStringAsync();
-                    return StatusCode((int)response.StatusCode, new { message = "Lỗi khi gọi Gemini API", error = errorDetails });
+                    return StatusCode((int)response.StatusCode, new { message = "Error calling the Gemini API.", error = errorDetails });
                 }
 
-                // 6. Đọc và bóc tách kết quả JSON trả về từ Gemini
+                // 6. Read and extract the JSON response from Gemini
                 string jsonResponse = await response.Content.ReadAsStringAsync();
                 using var doc = JsonDocument.Parse(jsonResponse);
                 
@@ -89,12 +88,12 @@ namespace SmartShopAPI.Controllers
                     .GetString()?
                     .Trim() ?? string.Empty;
 
-                // 7. Lưu mô tả mới vào cột Description trong CSDL
+                // 7. Save the new description to the Description column in the database
                 product.Description = generatedDescription;
                 _context.Products.Update(product);
                 await _context.SaveChangesAsync();
 
-                // 8. Trả về kết quả JSON cho client
+                // 8. Return the JSON result to the client
                 return Ok(new
                 {
                     productId = product.ProductId,
@@ -107,7 +106,7 @@ namespace SmartShopAPI.Controllers
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { message = "Lỗi hệ thống", error = ex.Message });
+                return StatusCode(500, new { message = "System error.", error = ex.Message });
             }
         }
     }

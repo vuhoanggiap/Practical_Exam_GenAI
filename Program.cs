@@ -3,12 +3,12 @@ using SmartShopAPI.Data;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// 1. Đăng ký kết nối MySQL với Entity Framework Core
+// 1. Register the MySQL connection with Entity Framework Core
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 builder.Services.AddDbContext<SmartShopContext>(options =>
     options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString)));
 
-// 2. Đăng ký dịch vụ Controllers (bắt buộc để chạy các API dạng Controller)
+// 2. Register controller services (required for controller-based APIs)
 builder.Services.AddControllers();
 builder.Services.AddHttpClient();
 
@@ -26,9 +26,9 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
-// 3. Map các route của Controller vào ứng dụng
+// 3. Map controller routes to the application
 app.MapControllers();
 
-// (Tùy chọn) Bạn có thể xóa đoạn code mẫu WeatherForecast cũ đi vì không dùng đến
+// (Optional) Remove the unused WeatherForecast sample code
 
 app.Run();
